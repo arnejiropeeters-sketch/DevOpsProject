@@ -2,6 +2,7 @@ services:
   traefik:
     image: traefik:latest
     container_name: traefik_proxy
+    restart: unless-stopped
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
@@ -15,19 +16,214 @@ services:
     networks:
       - proxy-net
 
-  service1:
-    image: nginxdemos/hello:plain-text
-    container_name: service_1
+  # ==========================================
+  # SERVICE 1: MEDIA STACK (Jellyfin + Prowlarr)
+  # ==========================================
+  stack-init:
+    image: curlimages/curl:latest
+    container_name: service1_stack_init
+    depends_on:
+      - radarr
+      - prowlarr
+      - qbittorrent
+    environment:
+      - RADARR_API_KEY=${RADARR_API_KEY}
+      - PROWLARR_API_KEY=${PROWLARR_API_KEY}
+      - RADARR_PATH=${RADARR_PATH}
+      - PROWLARR_PATH=${PROWLARR_PATH}
+    volumes:
+      - ./service1/media:/media
+    networks:
+      - proxy-net
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo "Wachten tot Radarr en Prowlarr API online zijn..."
+        until curl -sf "http://service1_radarr:7878$${RADARR_PATH}/api/v3/system/status?apikey=$${RADARR_API_KEY}" > /dev/null; do sleep 2; done
+        until curl -sf "http://service1_prowlarr:9696$${PROWLARR_PATH}/api/v1/system/status?apikey=$${PROWLARR_API_KEY}" > /dev/null; do sleep 2; done
+
+        mkdir -p /media/movies /media/downloads
+
+        # 1. Voeg /media/movies als root-map toe in Radarr (indien nog niet aanwezig)
+        if ! curl -sf "http://service1_radarr:7878$${RADARR_PATH}/api/v3/rootfolder?apikey=$${RADARR_API_KEY}" | grep -q "/media/movies"; then
+          curl -sf -X POST "http://service1_radarr:7878$${RADARR_PATH}/api/v3/rootfolder?apikey=$${RADARR_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"path":"/media/movies"}' > /dev/null
+          echo "Radarr rootfolder /media/movies toegevoegd."
+        fi
+
+        # 2. Koppel qBittorrent als downloadclient in Radarr (indien nog niet aanwezig)
+        if ! curl -sf "http://service1_radarr:7878$${RADARR_PATH}/api/v3/downloadclient?apikey=$${RADARR_API_KEY}" | grep -q "qBittorrent"; then
+          curl -sf -X POST "http://service1_radarr:7878$${RADARR_PATH}/api/v3/downloadclient?apikey=$${RADARR_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "enable": true,
+              "protocol": "torrent",
+              "priority": 1,
+              "name": "qBittorrent",
+              "implementation": "QBittorrent",
+              "configContract": "QBittorrentSettings",
+              "fields": [
+                {"name": "host", "value": "service1_qbittorrent"},
+                {"name": "port", "value": 8081},
+                {"name": "useSsl", "value": false},
+                {"name": "urlBase", "value": ""},
+                {"name": "username", "value": "admin"},
+                {"name": "password", "value": "adminadmin"},
+                {"name": "movieCategory", "value": "radarr"}
+              ]
+            }' > /dev/null
+          echo "qBittorrent gekoppeld aan Radarr."
+        fi
+
+        # 3. Koppel Radarr als applicatie in Prowlarr (indien nog niet aanwezig)
+        if ! curl -sf "http://service1_prowlarr:9696$${PROWLARR_PATH}/api/v1/applications?apikey=$${PROWLARR_API_KEY}" | grep -q "Radarr"; then
+          curl -sf -X POST "http://service1_prowlarr:9696$${PROWLARR_PATH}/api/v1/applications?apikey=$${PROWLARR_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"syncLevel\": \"fullSync\",
+              \"name\": \"Radarr\",
+              \"implementation\": \"Radarr\",
+              \"configContract\": \"RadarrSettings\",
+              \"fields\": [
+                {\"name\": \"prowlarrUrl\", \"value\": \"http://service1_prowlarr:9696$${PROWLARR_PATH}\"},
+                {\"name\": \"baseUrl\", \"value\": \"http://service1_radarr:7878$${RADARR_PATH}\"},
+                {\"name\": \"apiKey\", \"value\": \"$${RADARR_API_KEY}\"},
+                {\"name\": \"syncCategories\", \"value\": [2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060]}
+              ]
+            }" > /dev/null
+          echo "Radarr gekoppeld aan Prowlarr."
+        fi
+
+        echo "Service 1 koppelingen voltooid!"
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: service1_jellyseerr
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ./service1/jellyseerr/config:/app/config
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.service1.rule=Host(`${DOMAIN}`) && PathPrefix(`${SERVICE1_PATH}`)"
-      - "traefik.http.routers.service1.entrypoints=web"
-      - "traefik.http.middlewares.strip1.stripprefix.prefixes=${SERVICE1_PATH}"
-      - "traefik.http.routers.service1.middlewares=strip1"
-      - "traefik.http.services.service1.loadbalancer.server.port=80"
+      - "traefik.http.routers.jellyseerr.rule=Host(`${DOMAIN}`) && PathPrefix(`${JELLYSEERR_PATH}`)"
+      - "traefik.http.routers.jellyseerr.entrypoints=web"
+      - "traefik.http.middlewares.strip-jellyseerr.stripprefix.prefixes=${JELLYSEERR_PATH}"
+      - "traefik.http.routers.jellyseerr.middlewares=strip-jellyseerr"
+      - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
     networks:
       - proxy-net
 
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: service1_radarr
+    restart: unless-stopped
+    environment:
+      - RADARR__AUTH__APIKEY=${RADARR_API_KEY}
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - RADARR__SERVER__URLBASE=${RADARR_PATH}
+    volumes:
+      - ./service1/radarr/config:/config
+      - ./service1/media:/media
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.rule=Host(`${DOMAIN}`) && PathPrefix(`${RADARR_PATH}`)"
+      - "traefik.http.routers.radarr.entrypoints=web"
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
+    networks:
+      - proxy-net
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: service1_qbittorrent
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - WEBUI_PORT=8081
+    volumes:
+      - ./service1/qbit/config:/config
+      - ./service1/media:/media
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.qbit.rule=Host(`${DOMAIN}`) && PathPrefix(`${QBIT_PATH}`)"
+      - "traefik.http.routers.qbit.entrypoints=web"
+      - "traefik.http.middlewares.strip-qbit.stripprefix.prefixes=${QBIT_PATH}"
+      - "traefik.http.routers.qbit.middlewares=strip-qbit"
+      - "traefik.http.services.qbit.loadbalancer.server.port=8081"
+    networks:
+      - proxy-net
+  jellyfin-init:
+    image: alpine:latest
+    container_name: service1_jellyfin_init
+    volumes:
+      - ./service1/jellyfin/config:/config
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /config/config
+        if [ ! -f /config/config/network.xml ]; then
+          echo '<?xml version="1.0" encoding="utf-8"?>' > /config/config/network.xml
+          echo '<NetworkConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">' >> /config/config/network.xml
+          echo '  <BaseUrl>/service1/jellyfin</BaseUrl>' >> /config/config/network.xml
+          echo '  <EnableHttps>false</EnableHttps>' >> /config/config/network.xml
+          echo '  <InternalHttpPort>8096</InternalHttpPort>' >> /config/config/network.xml
+          echo '  <PublicHttpPort>80</PublicHttpPort>' >> /config/config/network.xml
+          echo '  <AutoDiscovery>true</AutoDiscovery>' >> /config/config/network.xml
+          echo '  <EnableIPv4>true</EnableIPv4>' >> /config/config/network.xml
+          echo '  <EnableRemoteAccess>true</EnableRemoteAccess>' >> /config/config/network.xml
+          echo '</NetworkConfiguration>' >> /config/config/network.xml
+        fi
+  jellyfin:
+     image: jellyfin/jellyfin:latest
+     container_name: service1_jellyfin
+     restart: unless-stopped
+     depends_on:
+       jellyfin-init:
+         condition: service_completed_successfully
+     environment:
+        - TZ=${TZ}
+        - JELLYFIN_PublishedServerUrl=http://${DOMAIN}${JELLYFIN_PATH}
+     volumes:
+       - ./service1/jellyfin/config:/config
+       - ./service1/media:/media
+     labels:
+       - "traefik.enable=true"
+       - "traefik.http.routers.jellyfin.rule=Host(`${DOMAIN}`) && PathPrefix(`${JELLYFIN_PATH}`)"
+       - "traefik.http.routers.jellyfin.entrypoints=web"
+       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+     networks:
+       - proxy-net
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: service1_prowlarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - PROWLARR__SERVER__URLBASE=${PROWLARR_PATH}
+      - PROWLARR__AUTH__APIKEY=${PROWLARR_API_KEY}
+    volumes:
+      - ./service1/prowlarr/config:/config
+      - ./service1/media:/media
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr.rule=Host(`${DOMAIN}`) && PathPrefix(`${PROWLARR_PATH}`)"
+      - "traefik.http.routers.prowlarr.entrypoints=web"
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
+    networks:
+      - proxy-net
+
+  # ==========================================
+  # SERVICE 2
+  # ==========================================
   service2:
     image: containous/whoami
     container_name: service_2
@@ -41,6 +237,9 @@ services:
     networks:
       - proxy-net
 
+  # ==========================================
+  # SERVICE 3
+  # ==========================================
   service3:
     image: httpd:alpine
     container_name: service_3
@@ -54,6 +253,9 @@ services:
     networks:
       - proxy-net
 
+  # ==========================================
+  # SERVICE 4
+  # ==========================================
   service4:
     image: crccheck/hello-world
     container_name: service_4
