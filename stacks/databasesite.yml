@@ -1,5 +1,5 @@
   # ==========================================
-  # SERVICE 2: website met
+  # SERVICE 2: website met database
   # ==========================================
 services:
   postgres:
@@ -46,4 +46,9 @@ services:
         - "traefik.http.services.databasewebsite.loadbalancer.server.port=3000"
       networks:
         - proxy-net
+
+networks:
+  proxy-net:
+    name: proxy-net
+    driver: bridge
     

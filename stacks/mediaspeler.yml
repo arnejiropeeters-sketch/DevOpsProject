@@ -2,20 +2,73 @@
   # SERVICE 1: MEDIA STACK 
   # ==========================================
   services:
+    qbit-init:
+        image: python:3.12-alpine
+        container_name: service1_qbit_init
+        environment:
+          - QBIT_PASS=${QBIT_PASS}
+        volumes:
+          - ../service1/qbit/config:/config
+        command:
+          - sh
+          - -c
+          - |
+            python3 - << 'EOF'
+            import os, hashlib, base64, configparser
+            conf_dir = "/config/qBittorrent"
+            conf_file = os.path.join(conf_dir, "qBittorrent.conf")
+            os.makedirs(conf_dir, exist_ok=True)
+            pw = os.environ["QBIT_PASS"].encode()
+            salt = os.urandom(16)
+            dk = hashlib.pbkdf2_hmac("sha512", pw, salt, 100000, dklen=64)
+            pbkdf2_val = f"@ByteArray({base64.b64encode(salt).decode()}:{base64.b64encode(dk).decode()})"
+            cfg = configparser.RawConfigParser()
+            cfg.optionxform = str
+            if os.path.exists(conf_file):
+                cfg.read(conf_file)
+            if "Preferences" not in cfg:
+                cfg["Preferences"] = {}
+            cfg["Preferences"]["WebUI\\Username"] = "admin"
+            cfg["Preferences"]["WebUI\\Password_PBKDF2"] = pbkdf2_val
+            cfg["Preferences"]["WebUI\\CSRFProtection"] = "false"
+            cfg["Preferences"]["WebUI\\HostHeaderValidation"] = "false"
+            cfg["Preferences"]["WebUI\\HTTPS\\Enabled"] = "false"
+            with open(conf_file, "w") as f:
+                cfg.write(f, space_around_delimiters=False)
+            os.chown(conf_dir, 1000, 1000)
+            os.chown(conf_file, 1000, 1000)
+            EOF
+    media-init:
+      image: alpine:latest
+      container_name: service1_media_init
+      volumes:
+        - ../service1/media:/media
+      command:
+        - sh
+        - -c
+        - |
+          mkdir -p /media/movies /media/downloads
+          chown -R 1000:1000 /media
+          chmod -R u+rwX,g+rwX /media
     stack-init:
       image: curlimages/curl:latest
       container_name: service1_stack_init
       depends_on:
-        - radarr
-        - prowlarr
-        - qbittorrent
+        media-init:
+            condition: service_completed_successfully
+        radarr:
+          condition: service_started
+        prowlarr:
+          condition: service_started
+        qbittorrent:
+          condition: service_started
       environment:
         - RADARR_API_KEY=${RADARR_API_KEY}
         - PROWLARR_API_KEY=${PROWLARR_API_KEY}
         - RADARR_PATH=${RADARR_PATH}
         - PROWLARR_PATH=${PROWLARR_PATH}
       volumes:
-        - ./service1/media:/media
+        - ../service1/media:/media
       networks:
         - proxy-net
       entrypoint:
@@ -80,27 +133,48 @@
           fi
 
           echo "Service 1 koppelingen voltooid!"
-    jellyseerr:
-      image: fallenbagel/jellyseerr:latest
-      container_name: service1_jellyseerr
-      restart: unless-stopped
-      environment:
-        - TZ=${TZ}
-      volumes:
-        - ./service1/jellyseerr/config:/app/config
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.jellyseerr.rule=Host(`${DOMAIN}`) && PathPrefix(`${JELLYSEERR_PATH}`)"
-        - "traefik.http.routers.jellyseerr.entrypoints=web"
-        - "traefik.http.middlewares.strip-jellyseerr.stripprefix.prefixes=${JELLYSEERR_PATH}"
-        - "traefik.http.routers.jellyseerr.middlewares=strip-jellyseerr"
-        - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
-      networks:
-        - proxy-net
+    seerr:
+        image: ghcr.io/seerr-team/seerr:latest
+        container_name: service1_seerr
+        init: true
+        restart: unless-stopped
+        environment:
+          - TZ=${TZ}
+        volumes:
+          - ../service1/seerr/config:/app/config
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.seerr.rule=Host(`seerr.localhost`)"
+          - "traefik.http.routers.seerr.entrypoints=web"
+          - "traefik.http.services.seerr.loadbalancer.server.port=5055"
+        networks:
+          - proxy-net
+
+    sonarr:
+        image: lscr.io/linuxserver/sonarr:latest
+        container_name: service1_sonarr
+        environment:
+          - PUID=1000
+          - PGID=1000
+          - TZ=Europe/Brussels
+        volumes:
+          - ../service1/sonarr/config:/config
+          - ../service1/media:/media
+        networks:
+          - proxy-net
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.sonarr.rule=Host(`sonarr.localhost`)"
+          - "traefik.http.routers.sonarr.entrypoints=web"
+          - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
+        restart: unless-stopped
 
     radarr:
       image: lscr.io/linuxserver/radarr:latest
       container_name: service1_radarr
+      depends_on:
+        media-init:
+          condition: service_completed_successfully
       restart: unless-stopped
       environment:
         - RADARR__AUTH__APIKEY=${RADARR_API_KEY}
@@ -109,8 +183,8 @@
         - TZ=${TZ}
         - RADARR__SERVER__URLBASE=${RADARR_PATH}
       volumes:
-        - ./service1/radarr/config:/config
-        - ./service1/media:/media
+        - ../service1/radarr/config:/config
+        - ../service1/media:/media
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.radarr.rule=Host(`${DOMAIN}`) && PathPrefix(`${RADARR_PATH}`)"
@@ -128,9 +202,12 @@
         - PGID=1000
         - TZ=${TZ}
         - WEBUI_PORT=8081
+      depends_on:
+        qbit-init:
+          condition: service_completed_successfully
       volumes:
-        - ./service1/qbit/config:/config
-        - ./service1/media:/media
+        - ../service1/qbit/config:/config
+        - ../service1/media:/media
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.qbit.rule=Host(`${DOMAIN}`) && PathPrefix(`${QBIT_PATH}`)"
@@ -144,7 +221,7 @@
       image: alpine:latest
       container_name: service1_jellyfin_init
       volumes:
-        - ./service1/jellyfin/config:/config
+        - ../service1/jellyfin/config:/config
       command:
         - sh
         - -c
@@ -173,8 +250,8 @@
           - TZ=${TZ}
           - JELLYFIN_PublishedServerUrl=http://${DOMAIN}${JELLYFIN_PATH}
       volumes:
-        - ./service1/jellyfin/config:/config
-        - ./service1/media:/media
+        - ../service1/jellyfin/config:/config
+        - ../service1/media:/media
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.jellyfin.rule=Host(`${DOMAIN}`) && PathPrefix(`${JELLYFIN_PATH}`)"
@@ -194,8 +271,8 @@
         - PROWLARR__SERVER__URLBASE=${PROWLARR_PATH}
         - PROWLARR__AUTH__APIKEY=${PROWLARR_API_KEY}
       volumes:
-        - ./service1/prowlarr/config:/config
-        - ./service1/media:/media
+        - ../service1/prowlarr/config:/config
+        - ../service1/media:/media
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.prowlarr.rule=Host(`${DOMAIN}`) && PathPrefix(`${PROWLARR_PATH}`)"
@@ -203,4 +280,9 @@
         - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
       networks:
         proxy-net:
+
+  networks:
+    proxy-net:
+      name: proxy-net
+      driver: bridge
          

@@ -1,6 +1,7 @@
 include:
   - stacks/mediaspeler.yml
   - stacks/databasesite.yml
+  - stacks/nextcloud.yml
 
 services:
   traefik:
