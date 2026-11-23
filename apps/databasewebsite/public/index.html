@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="nl" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Miniaturen Database — Service 2</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #111418; }
+    .card { background-color: #1a1f26; border: 1px solid #2b323c; }
+    .stat-box { border-left: 4px solid #198754; }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
+      <div>
+        <h1 class="h3 mb-1">Miniaturen Database</h1>
+        <p class="text-secondary mb-0">Service 2 • Node.js + Express + PostgreSQL achter Traefik</p>
+
+    <!-- Statistieken -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card stat-box p-3">
+          <div class="text-secondary small">Totaal Modellen</div>
+          <div class="h3 mb-0" id="stat-models">0</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-box p-3" style="border-left-color: #0dcaf0;">
+          <div class="text-secondary small">Totaal Punten</div>
+          <div class="h3 mb-0" id="stat-points">0 pts</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-box p-3" style="border-left-color: #ffc107;">
+          <div class="text-secondary small">Geschilderd (Battle/Parade Ready)</div>
+          <div class="h3 mb-0" id="stat-painted">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Formulier -->
+      <div class="col-lg-4">
+        <div class="card p-3">
+          <h2 class="h5 mb-3">Nieuwe miniatuur toevoegen</h2>
+          <form id="mini-form">
+            <div class="mb-2">
+              <label class="form-label small">Naam eenheid / model *</label>
+              <input type="text" class="form-control form-control-sm" id="name" placeholder="bijv. Foetid Bloat-Drone" required />
+            </div>
+            <div class="mb-2">
+              <label class="form-label small">Spelsysteem *</label>
+              <select class="form-select form-select-sm" id="system_game">
+                <option value="Warhammer 40,000">Warhammer 40,000</option>
+                <option value="D&D 5e">D&D 5e</option>
+                <option value="Age of Sigmar">Age of Sigmar</option>
+                <option value="Overig">Overig</option>
+              </select>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small">Factie / Categorie *</label>
+              <input type="text" class="form-control form-control-sm" id="faction" placeholder="bijv. Death Guard" required />
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small">Aantal</label>
+                <input type="number" class="form-control form-control-sm" id="quantity" value="1" min="1" />
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Punten</label>
+                <input type="number" class="form-control form-control-sm" id="points" value="0" min="0" />
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small">Schilderstatus</label>
+              <select class="form-select form-select-sm" id="paint_status">
+                <option value="Unbuilt">Unbuilt (Ongebouwd)</option>
+                <option value="Built">Built (Gebouwd)</option>
+                <option value="Primed">Primed (Grondlaag)</option>
+                <option value="Battle Ready">Battle Ready</option>
+                <option value="Parade Ready">Parade Ready</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small">Notities / Verfrecept</label>
+              <input type="text" class="form-control form-control-sm" id="notes" placeholder="Optioneel..." />
+            </div>
+            <button type="submit" class="btn btn-success btn-sm w-100">Opslaan in PostgreSQL</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tabel & Filter -->
+      <div class="col-lg-8">
+        <div class="card p-3">
+          <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+            <h2 class="h5 mb-0">Collectie Overzicht</h2>
+            <div class="d-flex gap-2">
+              <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Zoek naam of factie..." />
+              <select id="filter-status" class="form-select form-select-sm">
+                <option value="">Alle statussen</option>
+                <option value="Unbuilt">Unbuilt</option>
+                <option value="Built">Built</option>
+                <option value="Primed">Primed</option>
+                <option value="Battle Ready">Battle Ready</option>
+                <option value="Parade Ready">Parade Ready</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle mb-0 small">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Systeem / Factie</th>
+                  <th>Aantal</th>
+                  <th>Punten</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="mini-table-body">
+                <tr><td colspan="6" class="text-center text-secondary py-3">Laden vanuit PostgreSQL...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allMiniatures = [];
+    const statuses = ['Unbuilt', 'Built', 'Primed', 'Battle Ready', 'Parade Ready'];
+
+    // Werkt altijd, zowel bij /service2/app als /service2/app/
+    const basePath = window.location.pathname.endsWith('/')
+      ? window.location.pathname
+      : `${window.location.pathname}/`;
+    const apiUrl = `${basePath}api/miniatures`;
+
+    async function loadMiniatures() {
+      try {
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        allMiniatures = await res.json();
+        render();
+      } catch (err) {
+        console.error('Fout bij laden:', err);
+        document.getElementById('mini-table-body').innerHTML =
+          `<tr><td colspan="6" class="text-center text-danger py-3">Kan data niet laden (${err.message}). Controleer de console.</td></tr>`;
+      }
+    }
+
+    function render() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      const statusFilter = document.getElementById('filter-status').value;
+
+      const filtered = allMiniatures.filter((m) => {
+        const matchesText =
+          m.name.toLowerCase().includes(query) ||
+          m.faction.toLowerCase().includes(query) ||
+          m.system_game.toLowerCase().includes(query);
+        const matchesStatus = !statusFilter || m.paint_status === statusFilter;
+        return matchesText && matchesStatus;
+      });
+
+      const totalModels = allMiniatures.reduce((sum, m) => sum + m.quantity, 0);
+      const totalPoints = allMiniatures.reduce((sum, m) => sum + m.points, 0);
+      const paintedModels = allMiniatures
+        .filter((m) => ['Battle Ready', 'Parade Ready', 'Painted'].includes(m.paint_status))
+        .reduce((sum, m) => sum + m.quantity, 0);
+      const paintedPct = totalModels > 0 ? Math.round((paintedModels / totalModels) * 100) : 0;
+
+      document.getElementById('stat-models').textContent = totalModels;
+      document.getElementById('stat-points').textContent = `${totalPoints} pts`;
+      document.getElementById('stat-painted').textContent = `${paintedPct}%`;
+
+      const tbody = document.getElementById('mini-table-body');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-3">Geen miniaturen gevonden.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((m) => `
+        <tr>
+          <td>
+            <div class="fw-semibold">${escapeHtml(m.name)}</div>
+            ${m.notes ? `<div class="text-secondary" style="font-size: 0.75rem;">${escapeHtml(m.notes)}</div>` : ''}
+          </td>
+          <td>
+            <div>${escapeHtml(m.faction)}</div>
+            <div class="text-secondary" style="font-size: 0.75rem;">${escapeHtml(m.system_game)}</div>
+          </td>
+          <td>${m.quantity}x</td>
+          <td>${m.points}</td>
+          <td>
+            <select class="form-select form-select-sm" style="width: 135px;" onchange="updateStatus(${m.id}, this.value)">
+              ${statuses.map((s) => `<option value="${s}" ${m.paint_status === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </td>
+          <td class="text-end">
+            <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="deleteMiniature(${m.id})">×</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    document.getElementById('mini-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('name').value,
+        system_game: document.getElementById('system_game').value,
+        faction: document.getElementById('faction').value,
+        quantity: document.getElementById('quantity').value,
+        points: document.getElementById('points').value,
+        paint_status: document.getElementById('paint_status').value,
+        notes: document.getElementById('notes').value,
+      };
+
+      try {
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `HTTP ${res.status}`);
+        }
+        e.target.reset();
+        document.getElementById('quantity').value = 1;
+        document.getElementById('points').value = 0;
+        await loadMiniatures();
+      } catch (err) {
+        alert(`Opslaan mislukt: ${err.message}`);
+      }
+    });
+
+    async function updateStatus(id, paint_status) {
+      const res = await fetch(`${apiUrl}/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paint_status }),
+      });
+      if (res.ok) await loadMiniatures();
+    }
+
+    async function deleteMiniature(id) {
+      const res = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+      if (res.ok) await loadMiniatures();
+    }
+
+    document.getElementById('search-input').addEventListener('input', render);
+    document.getElementById('filter-status').addEventListener('change', render);
+
+    loadMiniatures();
+  </script>
+</body>
+</html>

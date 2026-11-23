@@ -1,6 +1,6 @@
 include:
   - stacks/mediaspeler.yml
-
+  - stacks/databasesite.yml
 
 services:
   traefik:

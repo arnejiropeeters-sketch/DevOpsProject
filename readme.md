@@ -8,10 +8,10 @@ Alle containers communiceren intern via een gedeeld Docker bridge-netwerk (`prox
 ├── .gitignore                  # Sluit .env en runtime-data (service1/..4/) uit
 └── stacks/
     ├── mediaspeler.yml     # Volledige media-automatiseringsstack + init-containers
-    ├── service2.yml            # [In ontwikkeling]
+    ├── databasesite.yml           # site gelinkt met een database 
     ├── service3.yml            # [In ontwikkeling]
     └── service4.yml            # [In ontwikkeling]
 
 -- mediaspeler: mediaspeler met als basis jellyfin met daaraan jellyseer, prowlarr en qbittorrent gekoppeld om te proberen de mogelijkheid om films en series rechtstreeks te downloaden. 
-
+-- databasesite: zelfgeschreven website die gebruikmaakt van postgress om een database te tonen.
 

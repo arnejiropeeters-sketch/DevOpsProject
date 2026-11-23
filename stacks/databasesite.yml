@@ -1,0 +1,49 @@
+  # ==========================================
+  # SERVICE 2: website met
+  # ==========================================
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: service2_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - ../service2/postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - proxy-net
+
+
+
+  databasewebsite:
+      build:
+        context: ../apps/databasewebsite
+      image: databasewebsite:local
+      container_name: service2_databasewebsite
+      restart: unless-stopped
+      depends_on:
+        postgres:
+          condition: service_healthy
+      environment:
+        - DB_HOST=service2_postgres
+        - DB_PORT=5432
+        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+        - POSTGRES_DB=${POSTGRES_DB}
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.databasewebsite.rule=Host(`${DOMAIN}`) && PathPrefix(`${MINIATURES_APP_PATH}`)"
+        - "traefik.http.routers.databasewebsite.entrypoints=web"
+        - "traefik.http.middlewares.strip-databasewebsite.stripprefix.prefixes=${MINIATURES_APP_PATH}"
+        - "traefik.http.routers.databasewebsite.middlewares=strip-databasewebsite"
+        - "traefik.http.services.databasewebsite.loadbalancer.server.port=3000"
+      networks:
+        - proxy-net
+    
