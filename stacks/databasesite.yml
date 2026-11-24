@@ -40,10 +40,11 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.databasewebsite.rule=Host(`${DOMAIN}`) && PathPrefix(`${MINIATURES_APP_PATH}`)"
-        - "traefik.http.routers.databasewebsite.entrypoints=web"
+        - "traefik.http.routers.databasewebsite.entrypoints=websecure"
         - "traefik.http.middlewares.strip-databasewebsite.stripprefix.prefixes=${MINIATURES_APP_PATH}"
         - "traefik.http.routers.databasewebsite.middlewares=strip-databasewebsite"
         - "traefik.http.services.databasewebsite.loadbalancer.server.port=3000"
+        - "traefik.http.routers.databasewebsite.tls=true"
       networks:
         - proxy-net
 

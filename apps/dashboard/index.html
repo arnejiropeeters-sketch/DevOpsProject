@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevOps Homelab Dashboard</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; }
+    h1 { margin-top: 0; font-size: 1.75rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    a.card { display: block; padding: 1.1rem; border-radius: 10px; background: #1e293b; color: #f8fafc; text-decoration: none; border: 1px solid #334155; }
+    a.card:hover { border-color: #38bdf8; background: #273549; }
+    .name { font-weight: 600; font-size: 1.05rem; margin-bottom: 0.25rem; }
+    .url { font-size: 0.85rem; color: #94a3b8; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>DevOps Services</h1>
+  <div class="grid">
+    <a class="card" href="https://vault.localhost" target="_blank" rel="noopener">
+      <div class="name">Vaultwarden</div>
+      <div class="url">https://vault.localhost</div>
+    </a>
+    <a class="card" href="https://localhost/service1/qbit/" target="_blank" rel="noopener">
+      <div class="name">qBittorrent</div>
+      <div class="url">https://localhost/service1/qbit/</div>
+    </a>
+    <a class="card" href="https://localhost/service1/sonarr/" target="_blank" rel="noopener">
+      <div class="name">Sonarr</div>
+      <div class="url">https://localhost/service1/sonarr/</div>
+    </a>
+    <a class="card" href="https://localhost/service1/radarr/" target="_blank" rel="noopener">
+      <div class="name">Radarr</div>
+      <div class="url">https://localhost/service1/radarr/</div>
+    </a>
+    <a class="card" href="https://localhost/service1/prowlarr/" target="_blank" rel="noopener">
+      <div class="name">Prowlarr</div>
+      <div class="url">https://localhost/service1/prowlarr/</div>
+    </a>
+    <a class="card" href="https://seerr.localhost/" target="_blank" rel="noopener">
+      <div class="name">Seerr / Jellyseerr</div>
+      <div class="url">https://seerr.localhost/</div>
+    </a>
+    <a class="card" href="https://localhost/service1/jellyfin/" target="_blank" rel="noopener">
+      <div class="name">Jellyfin</div>
+      <div class="url">https://localhost/service1/jellyfin/</div>
+    </a>
+    <a class="card" href="https://localhost/service3/drive/" target="_blank" rel="noopener">
+      <div class="name">Nextcloud</div>
+      <div class="url">https://localhost/service3/drive/</div>
+    </a>
+    </a>
+    <a class="card" href="https://localhost/apps/databasewebsite/server.js" target="_blank" rel="noopener">
+      <div class="name">mini's database</div>
+      <div class="url">https://localhost/apps/databasewebsite/server.js</div>
+    </a>
+  </div>
+</body>
+</html>
+# vul zelf de juiste links in

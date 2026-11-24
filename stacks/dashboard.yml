@@ -1,0 +1,15 @@
+services:
+    dashboard:
+        image: nginx:alpine
+        container_name: devops_dashboard
+        volumes:
+          - ../apps/dashboard/index.html:/usr/share/nginx/html/index.html:ro
+        networks:
+          - proxy-net
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.dashboard.rule=Host(`localhost`) && PathPrefix(`/`)"
+          - "traefik.http.routers.dashboard.entrypoints=websecure"
+          - "traefik.http.routers.dashboard.tls=true"
+          - "traefik.http.routers.dashboard.priority=1"
+          - "traefik.http.services.dashboard.loadbalancer.server.port=80"

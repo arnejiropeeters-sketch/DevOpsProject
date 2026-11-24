@@ -2,6 +2,8 @@ include:
   - stacks/mediaspeler.yml
   - stacks/databasesite.yml
   - stacks/nextcloud.yml
+  - stacks/vaultwarden.yml
+  - stacks/dashboard.yml
 
 services:
   traefik:
@@ -12,14 +14,22 @@ services:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.filename=/etc/traefik/certs/dynamic.yml"
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
     ports:
       - "80:80"
       - "8080:8080"
+      - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs:/etc/traefik/certs:ro
     networks:
       - proxy-net
+      
+
 
 networks:
   proxy-net:

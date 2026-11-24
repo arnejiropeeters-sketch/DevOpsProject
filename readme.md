@@ -9,9 +9,13 @@ Alle containers communiceren intern via een gedeeld Docker bridge-netwerk (`prox
 └── stacks/
     ├── mediaspeler.yml     # Volledige media-automatiseringsstack + init-containers
     ├── databasesite.yml           # site gelinkt met een database 
-    ├── service3.yml            # [In ontwikkeling]
-    └── service4.yml            # [In ontwikkeling]
+    ├── nextcloud.yml              # nextcloud drive
+    ├── vaultwarden.yml            # Password manager 
+    └──dashboard.yml               # homepagina met links
 
 -- mediaspeler: mediaspeler met als basis jellyfin met daaraan jellyseer, prowlarr en qbittorrent gekoppeld om te proberen de mogelijkheid om films en series rechtstreeks te downloaden. 
 -- databasesite: zelfgeschreven website die gebruikmaakt van postgress om een database te tonen.
+-- nextcloud: drive voor bestandsopslag
+-- vaultwarden: password manager
 
+-- info over verdere setup volgt na eigen tests

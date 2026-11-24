@@ -1,0 +1,19 @@
+services:
+    vaultwarden:
+        image: vaultwarden/server:latest
+        container_name: service4_vaultwarden
+        environment:
+          - TZ=Europe/Brussels
+          - DOMAIN=https://vault.localhost
+          #pas dit aan na inlog naar SIGNUPS_ALLOWED=false
+          - SIGNUPS_ALLOWED=true
+        volumes:
+          - ../service4/vaultwarden/data:/data
+        networks:
+          - proxy-net
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.vaultwarden.rule=Host(`vault.localhost`)"
+          - "traefik.http.routers.vaultwarden.entrypoints=websecure"
+          - "traefik.http.routers.vaultwarden.tls=true"
+          - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
