@@ -143,11 +143,23 @@
         volumes:
           - ../service1/seerr/config:/app/config
         labels:
-          - "traefik.enable=true"
-          - "traefik.http.routers.seerr.rule=Host(`seerr.localhost`)"
-          - "traefik.http.routers.seerr.entrypoints=websecure"
-          - "traefik.http.services.seerr.loadbalancer.server.port=5055"
-          - "traefik.http.routers.seerr.tls=true"
+                - "traefik.enable=true"
+                # 1. Subpath router met stripprefix
+                - "traefik.http.routers.seerr.rule=Host(`${DOMAIN}`) && PathPrefix(`${SEERR_PATH}`)"
+                - "traefik.http.routers.seerr.entrypoints=websecure"
+                - "traefik.http.routers.seerr.tls=true"
+                - "traefik.http.routers.seerr.priority=50"
+                - "traefik.http.routers.seerr.middlewares=seerr-strip"
+                - "traefik.http.routers.seerr.service=seerr"
+                - "traefik.http.middlewares.seerr-strip.stripprefix.prefixes=${SEERR_PATH}"
+                # 2. Root-paden router voor Next.js assets, API en /login redirect (zonder stripprefix)
+                - "traefik.http.routers.seerr-root.rule=Host(`${DOMAIN}`) && (PathPrefix(`/login`) || PathPrefix(`/_next`) || PathPrefix(`/api/v1`) || PathPrefix(`/images`) || PathPrefix(`/avatarproxy`) || Path(`/manifest.json`) || Path(`/sw.js`) || Path(`/offline`))"
+                - "traefik.http.routers.seerr-root.entrypoints=websecure"
+                - "traefik.http.routers.seerr-root.tls=true"
+                - "traefik.http.routers.seerr-root.priority=50"
+                - "traefik.http.routers.seerr-root.service=seerr"
+                # Service poort
+                - "traefik.http.services.seerr.loadbalancer.server.port=5055"
         networks:
           - proxy-net
 
@@ -165,7 +177,7 @@
           - proxy-net
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.sonarr.rule=PathPrefix(`/service1/sonarr`)"
+            - "traefik.http.routers.sonarr.rule=Host(`${DOMAIN}`) && PathPrefix(`${SONARR_PATH}`)"
             - "traefik.http.routers.sonarr.entrypoints=websecure"
             - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
             - "traefik.http.routers.sonarr.tls=true"

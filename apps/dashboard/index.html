@@ -3,58 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DevOps Homelab Dashboard</title>
+  <title>DevOps Dashboard</title>
   <style>
     body { font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; }
-    h1 { margin-top: 0; font-size: 1.75rem; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    h1 { margin: 0 0 0.25rem 0; font-size: 1.75rem; }
+    .sub { color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
     a.card { display: block; padding: 1.1rem; border-radius: 10px; background: #1e293b; color: #f8fafc; text-decoration: none; border: 1px solid #334155; }
     a.card:hover { border-color: #38bdf8; background: #273549; }
-    .name { font-weight: 600; font-size: 1.05rem; margin-bottom: 0.25rem; }
+    .name { font-weight: 600; font-size: 1.05rem; margin-bottom: 0.3rem; }
     .url { font-size: 0.85rem; color: #94a3b8; word-break: break-all; }
   </style>
 </head>
 <body>
   <h1>DevOps Services</h1>
-  <div class="grid">
-    <a class="card" href="https://vault.localhost" target="_blank" rel="noopener">
-      <div class="name">Vaultwarden</div>
-      <div class="url">https://vault.localhost</div>
-    </a>
-    <a class="card" href="https://localhost/service1/qbit/" target="_blank" rel="noopener">
-      <div class="name">qBittorrent</div>
-      <div class="url">https://localhost/service1/qbit/</div>
-    </a>
-    <a class="card" href="https://localhost/service1/sonarr/" target="_blank" rel="noopener">
-      <div class="name">Sonarr</div>
-      <div class="url">https://localhost/service1/sonarr/</div>
-    </a>
-    <a class="card" href="https://localhost/service1/radarr/" target="_blank" rel="noopener">
-      <div class="name">Radarr</div>
-      <div class="url">https://localhost/service1/radarr/</div>
-    </a>
-    <a class="card" href="https://localhost/service1/prowlarr/" target="_blank" rel="noopener">
-      <div class="name">Prowlarr</div>
-      <div class="url">https://localhost/service1/prowlarr/</div>
-    </a>
-    <a class="card" href="https://seerr.localhost/" target="_blank" rel="noopener">
-      <div class="name">Seerr / Jellyseerr</div>
-      <div class="url">https://seerr.localhost/</div>
-    </a>
-    <a class="card" href="https://localhost/service1/jellyfin/" target="_blank" rel="noopener">
-      <div class="name">Jellyfin</div>
-      <div class="url">https://localhost/service1/jellyfin/</div>
-    </a>
-    <a class="card" href="https://localhost/service3/drive/" target="_blank" rel="noopener">
-      <div class="name">Nextcloud</div>
-      <div class="url">https://localhost/service3/drive/</div>
-    </a>
-    </a>
-    <a class="card" href="https://localhost/apps/databasewebsite/server.js" target="_blank" rel="noopener">
-      <div class="name">mini's database</div>
-      <div class="url">https://localhost/apps/databasewebsite/server.js</div>
-    </a>
-  </div>
+  <div class="sub" id="domain-info"></div>
+  <div class="grid" id="links-grid"></div>
+
+  <script src="/config.js"></script>
+  <script>
+    function buildUrl(domain, rawPath) {
+      const cleanDomain = (domain || "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+      const cleanPath = (rawPath || "").trim();
+      if (!cleanDomain || !cleanPath || cleanPath.includes("${")) return null;
+      const normalizedPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+      return `https://${cleanDomain}${normalizedPath}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const cfg = window.APP_CONFIG || {};
+      const domainInfo = document.getElementById("domain-info");
+      const grid = document.getElementById("links-grid");
+
+      const cleanDomain = (cfg.domain || "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+      if (domainInfo && cleanDomain) {
+        domainInfo.textContent = `Domain: ${cleanDomain}`;
+      }
+
+      const items = Array.isArray(cfg.services) ? cfg.services : [];
+      items.forEach((item) => {
+        const fullUrl = item ? buildUrl(cfg.domain, item.path) : null;
+        if (!fullUrl) return;
+
+        const a = document.createElement("a");
+        a.className = "card";
+        a.href = fullUrl;
+        a.target = "_blank";
+        a.rel = "noopener";
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "name";
+        nameEl.textContent = item.name;
+
+        const urlEl = document.createElement("div");
+        urlEl.className = "url";
+        urlEl.textContent = fullUrl;
+
+        a.appendChild(nameEl);
+        a.appendChild(urlEl);
+        grid.appendChild(a);
+      });
+    });
+  </script>
 </body>
 </html>
-# vul zelf de juiste links in

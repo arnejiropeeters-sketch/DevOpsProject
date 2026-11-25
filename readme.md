@@ -16,6 +16,6 @@ Alle containers communiceren intern via een gedeeld Docker bridge-netwerk (`prox
 -- mediaspeler: mediaspeler met als basis jellyfin met daaraan jellyseer, prowlarr en qbittorrent gekoppeld om te proberen de mogelijkheid om films en series rechtstreeks te downloaden. 
 -- databasesite: zelfgeschreven website die gebruikmaakt van postgress om een database te tonen.
 -- nextcloud: drive voor bestandsopslag
--- vaultwarden: password manager
+-- vaultwarden: password manager om deze te bereiken is er een / nodig op het einde van de url
 
 -- info over verdere setup volgt na eigen tests

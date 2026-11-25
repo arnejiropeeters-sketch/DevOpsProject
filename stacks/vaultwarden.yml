@@ -4,7 +4,7 @@ services:
         container_name: service4_vaultwarden
         environment:
           - TZ=Europe/Brussels
-          - DOMAIN=https://vault.localhost
+          - DOMAIN=https://${DOMAIN}${VAULT_PATH}
           #pas dit aan na inlog naar SIGNUPS_ALLOWED=false
           - SIGNUPS_ALLOWED=true
         volumes:
@@ -13,7 +13,7 @@ services:
           - proxy-net
         labels:
           - "traefik.enable=true"
-          - "traefik.http.routers.vaultwarden.rule=Host(`vault.localhost`)"
+          - "traefik.http.routers.vaultwarden.rule=Host(`${DOMAIN}`) && PathPrefix(`${VAULT_PATH}`)"
           - "traefik.http.routers.vaultwarden.entrypoints=websecure"
           - "traefik.http.routers.vaultwarden.tls=true"
           - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
