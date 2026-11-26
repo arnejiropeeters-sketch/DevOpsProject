@@ -164,7 +164,7 @@
           - proxy-net
 
 
-init-sonarr:
+    init-sonarr:
       image: alpine:latest
       container_name: service1_init_sonarr
       environment:
