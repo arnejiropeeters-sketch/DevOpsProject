@@ -164,7 +164,7 @@
           - proxy-net
 
 
-    init-sonarr:
+init-sonarr:
       image: alpine:latest
       container_name: service1_init_sonarr
       environment:
@@ -176,16 +176,15 @@
         - -c
         - |
           mkdir -p /config
-          CFG="/config/config.xml"
+          CFG=/config/config.xml
           if [ ! -f "$$CFG" ]; then
             printf '<Config>\n  <UrlBase>%s</UrlBase>\n</Config>\n' "$$SONARR_PATH" > "$$CFG"
           elif grep -q "<UrlBase>" "$$CFG"; then
-            sed -i "s|<UrlBase>.*</UrlBase>|<UrlBase>$${SONARR_PATH}</UrlBase>|g" "$$CFG"
+            sed -i "s|<UrlBase>[^<]*</UrlBase>|<UrlBase>$${SONARR_PATH}</UrlBase>|g" "$$CFG"
           else
             sed -i "s|</Config>|  <UrlBase>$${SONARR_PATH}</UrlBase>\n</Config>|" "$$CFG"
           fi
           chown -R 1000:1000 /config
-
     sonarr:
         image: lscr.io/linuxserver/sonarr:latest
         container_name: service1_sonarr
