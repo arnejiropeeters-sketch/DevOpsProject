@@ -177,7 +177,7 @@
         - |
           mkdir -p /config
           CFG="/config/config.xml"
-          if [ ! -f "$CFG" ]; then
+          if [ ! -f "$$CFG" ]; then
             printf '<Config>\n  <UrlBase>%s</UrlBase>\n</Config>\n' "$$SONARR_PATH" > "$$CFG"
           elif grep -q "<UrlBase>" "$$CFG"; then
             sed -i "s|<UrlBase>.*</UrlBase>|<UrlBase>$${SONARR_PATH}</UrlBase>|g" "$$CFG"
