@@ -5,8 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DevOps Dashboard</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; }
-    h1 { margin: 0 0 0.25rem 0; font-size: 1.75rem; }
+    :root {
+      --bg: #0b1120;
+      --surface: #111827;
+      --card: #162032;
+      --border: #26354d;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #22d3ee;
+      --accent-soft: rgba(34, 211, 238, 0.12);
+      --code-bg: #080d19;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at top right, #132238 0%, var(--bg) 50%);
+      color: var(--text);
+      line-height: 1.65;
+      padding: 2.5rem clamp(1rem, 4vw, 3rem);
+    }
+    .container {max-width: 1000px;margin: 0 auto;}
+    header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.9rem;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      margin: 0;color: var(--muted);}
+    nav.toc {
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    nav.toc a {
+      text-decoration: none;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    nav.toc a:hover {background: rgba(34, 211, 238, 0.22);}
+    section.chapter {margin-bottom: 3rem;}
+    section.chapter > h1 {
+      font-size: 1.65rem;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 0.4rem;
+      margin-bottom: 1.5rem;
+    }
+    article.service-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.25rem;
+    }
+    article.service-card h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.3rem;
+      color: var(--accent);
+    }
+    article.service-card h3 {
+      margin: 1.1rem 0 0.35rem 0;
+      font-size: 0.92rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    article.service-card p {margin: 0 0 0.75rem 0;}
+    article.service-card p:last-child {margin-bottom: 0;}
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: var(--code-bg);
+      color: #67e8f9;
+      padding: 0.15rem 0.4rem;
+      border-radius: 5px;
+      font-size: 0.88em;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.25rem;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.86rem;
+      line-height: 1.5;
+      color: #e2e8f0;
+      margin: 1.25rem 0;
+    }
+    .deployment-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.75rem;
+    }
+    .deployment-box h3 {margin-top: 1.5rem;color: var(--accent);}
+    ol {padding-left: 1.35rem;}
+    ol li {margin-bottom: 0.6rem;}
     .sub { color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.5rem; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
     a.card { display: block; padding: 1.1rem; border-radius: 10px; background: #1e293b; color: #f8fafc; text-decoration: none; border: 1px solid #334155; }
@@ -16,9 +125,146 @@
   </style>
 </head>
 <body>
-  <h1>DevOps Services</h1>
-  <div class="sub" id="domain-info"></div>
+    <header>
+      <h1>DevOps Stack Documentatie</h1>
+
+
+    <section class="chapter" id="diensten">
+      <h1>Diensten</h1>
+
+      <article class="service-card" id="traefik">
+        <h2>Traefik</h2>
+        <h3>Algemeen doel</h3>
+        <p>Traefik is een moderne reverse proxy en load balancer voor containerized omgevingen. Hij luistert naar Docker-labels en -netwerken en stuurt binnenkomend HTTP- en HTTPS-verkeer automatisch door naar de juiste container op basis van hostnamen en paden.</p>
+        <h3>Motivatie</h3>
+        <p>In een stack met meerdere containers en een dynamisch startdashboard is het belangrijk dat nieuwe of aangepaste diensten zonder handmatige proxy-reload ontsloten kunnen worden. Door alles achter Traefik te plaatsen blijft de blootgestelde poortstructuur overzichtelijk (HTTPS op poort <code>443</code>) en kan het verkeer zowel via <code>localhost</code> als via het LAN-IP (<code>192.168.0.213</code>) verlopen met SAN-certificaten.</p>
+        <h3>Technische opmerkingen</h3>
+        <p>Traefik hangt aan <code>proxy-net</code> en gebruikt <code>websecure</code> op poort <code>443</code> met TLS-certificaten die SAN's bevatten voor onder andere <code>localhost</code> en <code>192.168.0.213</code>. Diensten melden zich via <code>traefik.enable=true</code>, <code>traefik.http.routers.&lt;naam&gt;.rule=...</code>, <code>traefik.http.routers.&lt;naam&gt;.entrypoints=websecure</code>, <code>traefik.http.routers.&lt;naam&gt;.tls=true</code> en <code>traefik.http.services.&lt;naam&gt;.loadbalancer.server.port=...</code>. Waar nodig wordt een <code>stripprefix</code>-middleware of prioriteit (<code>priority</code>) ingezet zodat subpath-routers niet botsen met de root/dashboard-router (<code>priority=1</code>).</p>
+      </article>
+
+      <article class="service-card" id="dashboard">
+        <h2>Dashboard (<code>devops_dashboard</code>)</h2>
+        <h3>Algemeen doel</h3>
+        <p>Het dashboard is een statische webapplicatie op basis van <code>nginx:alpine</code> die een overzichtelijke startpagina toont met links naar alle diensten in de stack. Bij het opstarten van de container wordt een sjabloon omgezet naar een configuratiebestand zodat de links dynamisch uit de omgeving worden opgebouwd.</p>
+        <h3>Motivatie</h3>
+        <p>Wanneer meerdere services onder verschillende subpaden en een configureerbaar domein of IP draaien, is een centraal startpunt veel handiger dan losse bladwijzers of het onthouden van alle paden. Omdat de URL's uit <code>DOMAIN</code> en losse <code>*_PATH</code>-variabelen worden samengesteld, hoeft het domein of IP maar op één plek aangepast te worden zonder de HTML-code telkens te herschrijven.</p>
+        <h3>Technische opmerkingen</h3>
+        <p>De bronbestanden staan onder <code>apps/dashboard/</code> (<code>index.html</code> en <code>config.js.template</code>) en worden in <code>stacks/dashboard.yml</code> read-only (<code>:ro</code>) in <code>devops_dashboard</code> gemount. De omgevingsvariabelen (<code>DOMAIN</code> en de <code>*_PATH</code>-variabelen) worden via <code>environment:</code> aan de container meegegeven en bij containerstart via <code>envsubst</code> omgezet naar <code>/usr/share/nginx/html/config.js</code> (<code>window.APP_CONFIG</code>), waarna <code>nginx</code> op poort <code>80</code> draait en via Traefik (<code>PathPrefix(`/`)</code>, <code>priority=1</code>) wordt ontsloten.</p>
+      </article>
+
+      <article class="service-card" id="jellyfin">
+        <h2>Jellyfin</h2>
+        <h3>Algemeen doel</h3>
+        <p>Jellyfin is een open-source mediaserver waarmee je eigen films, series en muziek kunt organiseren, indexeren en streamen naar verschillende apparaten in het netwerk.</p>
+        <h3>Motivatie</h3>
+        <p>In plaats van afhankelijk te zijn van commerciële streamingplatforms of gesloten alternatieven met betaalde licenties (zoals Plex), biedt Jellyfin volledige controle over de eigen mediacollectie zonder externe accounts of kunstmatige beperkingen. Binnen deze stack vormt het de centrale speler waarop de andere <code>service1</code>-mediatools aansluiten.</p>
+        <h3>Technische opmerkingen</h3>
+        <p>Jellyfin draait binnen de <code>service1</code>-mediaspelerstack op <code>proxy-net</code> en wordt via Traefik ontsloten onder <code>${JELLYFIN_PATH}</code> (<code>/service1/jellyfin</code>) op <code>websecure</code> met TLS. Door het subpath in zowel Traefik als de base-URL-instelling van Jellyfin af te stemmen, blijven streams en webassets netjes binnen het eigen pad lopen naast het dashboard.</p>
+      </article>
+
+      <article class="service-card" id="seerr">
+        <h2>Seerr (<code>service1_seerr</code>)</h2>
+        <h3>Algemeen doel</h3>
+        <p>Seerr is een applicatie voor het aanvragen en beheren van media (zoals films en series) die aansluit op een mediaserver en automatiseringstools. Gebruikers kunnen ermee zoeken wat er beschikbaar is en nieuwe items aanvragen.</p>
+        <h3>Motivatie</h3>
+        <p>Een aparte aanvraaginterface maakt het beheer van media overzichtelijker dan rechtstreeks in de onderliggende download- of indexeringsdiensten te werken. Door Seerr op te nemen in de mediaspeler-stack sluit het direct aan op Jellyfin, Sonarr en Radarr en is het toegankelijk vanaf het startdashboard.</p>
+        <h3>Technische opmerkingen</h3>
+        <p>De container <code>ghcr.io/seerr-team/seerr:latest</code> draait als <code>service1_seerr</code> op <code>proxy-net</code> met configuratie op <code>../service1/seerr/config:/app/config</code> en luistert intern op poort <code>5055</code>. Omdat Seerr een Next.js-applicatie is die bij subpath-gebruik redirects of assets kan richten op rootpaden zoals <code>/login</code> of <code>/_next</code>, wordt naast de subpath-router (<code>Host(`${DOMAIN}`) &amp;&amp; PathPrefix(`${SEERR_PATH}`)</code> met <code>stripprefix</code> en <code>priority=50</code>) ook een <code>seerr-root</code>-router (<code>priority=50</code>) gebruikt voor die Next.js/Seerr-paden zodat ze correct aankomen bij poort <code>5055</code>.</p>
+      </article>
+
+      <article class="service-card" id="sonarr">
+        <h2>Sonarr</h2>
+        <h3>Algemeen doel</h3>
+        <p>Sonarr is een geautomatiseerde PVR- en beheertool voor tv-series. Het houdt bij welke afleveringen ontbreken of nieuw uitkomen, zoekt deze via indexers en stuurt downloads automatisch naar de downloadclient.</p>
+        <h3>Motivatie</h3>
+        <p>Handmatig afleveringen opvolgen en sorteren kost veel tijd zodra een mediabibliotheek groeit. Sonarr automatiseert dit hele proces van zoeken tot hernoemen en mappenstructuur, en koppelt direct met Prowlarr, qBittorrent en Jellyfin.</p>
+        <h3>Technische opmerkingen</h3>
+        <p>Sonarr maakt deel uit van de <code>service1</code>-stack op <code>proxy-net</code> en wordt achter Traefik ontsloten op <code>${SONARR_PATH}</code> (<code>/service1/sonarr</code>) over <code>websecure</code>. Om correct onder een subpath te werken gebruikt Sonarr dezelfde <code>URL Base</code> (<code>/service1/sonarr</code>) als in de Traefik <code>PathPrefix</code>-regel, terwijl interne API-koppelingen met Prowlarr, qBittorrent en Jellyfin over het interne Docker-netwerk lopen.</p>
+      </article>
+
+      <article class="service-card" id="radarr">
+        <h2>Radarr</h2>
+        <h3>Algemeen doel</h3>
+        <p>Radarr is een geautomatiseerde beheertool voor films die op dezelfde manier werkt als Sonarr, maar specifiek gericht is op filmcollecties, kwaliteitprofielen en releases.</p>
+        <h3>Motivatie</h3>
+        <p>Voor films gelden andere releases, kwaliteitseisen en naamgevingsconventies dan voor series. Door Radarr naast Sonarr te draaien wordt ook de filmbibliotheek volledig automatisch aangevuld, gesorteerd en klaargezet voor Jellyfin.</p>
+        <h3>Technische opmerkingen</h3>
+        <p>Radarr draait in de <code>service1</code>-stack op <code>proxy-net</code> en is via Traefik bereikbaar onder <code>${RADARR_PATH}</code> (<code>/service1/radarr</code>) op <code>websecure</code>. Net als bij Sonarr komt de ingestelde <code>URL Base</code> overeen met <code>${RADARR_PATH}</code> zodat redirects en webassets achter Traefik zonder padconflicten werken, en communiceert Radarr intern met Prowlarr en qBittorrent.</p>
+      </article>
+
+      <article class="service-card" id="prowlarr">
+        <h2>Prowlarr</h2>
+        <h3>Algemeen doel</h3>
+        <p>Prowlarr is een centrale indexer-manager die zoekopdrachten en indexers beheert en deze automatisch synchroniseert met gekoppelde <em>arr</em>-applicaties zoals Sonarr en Radarr.</p>
+        <h3>Motivatie</h3>
+        <p>Zonder Prowlarr moeten indexers en API-sleutels handmatig in zowel Sonarr als Radarr afzonderlijk worden ingesteld en onderhouden. Prowlarr centraliseert dit beheer op één plek en houdt alle gekoppelde services automatisch synchroon.</p>
+        <h3>Technische opmerkingen</h3>
+        <p>Prowlarr draait in de <code>service1</code>-stack op <code>proxy-net</code> en is via Traefik bereikbaar onder <code>${PROWLARR_PATH}</code> (<code>/service1/prowlarr</code>) op <code>websecure</code>. De <code>URL Base</code> in Prowlarr is afgestemd op <code>${PROWLARR_PATH}</code> zodat de webinterface onder het subpath functioneert, terwijl de synchronisatie met Sonarr en Radarr via hun interne container-hostnamen verloopt.</p>
+      </article>
+
+      <article class="service-card" id="qbittorrent">
+        <h2>qBittorrent</h2>
+        <h3>Algemeen doel</h3>
+        <p>qBittorrent is een lichtgewicht BitTorrent-client met een webinterface voor het downloaden en beheren van torrents.</p>
+        <h3>Motivatie</h3>
+        <p>Een downloadclient met een stabiele API en web-UI is noodzakelijk als uitvoerend onderdeel achter Sonarr en Radarr. qBittorrent is licht in resourceverbruik, open-source en wordt breed ondersteund door automatiseringstools.</p>
+        <h3>Technische opmerkingen</h3>
+        <p>qBittorrent draait binnen de <code>service1</code>-stack op <code>proxy-net</code> en wordt achter Traefik ontsloten onder <code>${QBIT_PATH}</code> (<code>/service1/qbit</code>) over <code>websecure</code>. Waar nodig wordt <code>stripprefix</code> toegepast omdat de ingebouwde web-UI van qBittorrent standaard vanaf <code>/</code> werkt, en delen de downloadvolumes hetzelfde padschema als Sonarr en Radarr voor vlotte bestandsverplaatsingen.</p>
+      </article>
+
+      <article class="service-card" id="nextcloud">
+        <h2>Nextcloud</h2>
+        <h3>Algemeen doel</h3>
+        <p>Nextcloud is een zelf-gehost samenwerkings- en cloudopslagplatform voor bestanden, synchronisatie tussen apparaten, agenda's en documenten.</p>
+        <h3>Motivatie</h3>
+        <p>Met Nextcloud blijft persoonlijke en projectdata op eigen opslag staan in plaats van bij commerciële cloudproviders, terwijl bestanden wel vanaf verschillende toestellen benaderbaar en synchroniseerbaar blijven. In deze stack fungeert het als de centrale cloudopslagdienst onder het dashboard.</p>
+        <h3>Technische opmerkingen</h3>
+        <p>Nextcloud draait op <code>proxy-net</code> en wordt via Traefik bereikbaar gemaakt onder <code>${NEXTCLOUD_PATH}</code> (<code>/service3/drive</code>) over <code>websecure</code> met TLS. Door het subpath en de trusted domains/proxy-instellingen op elkaar af te stemmen (<code>192.168.0.213</code> en <code>localhost</code>), herkent Nextcloud het HTTPS-verkeer achter Traefik correct en blijven links en redirects binnen <code>/service3/drive</code>.</p>
+      </article>
+
+      <article class="service-card" id="vaultwarden">
+        <h2>Vaultwarden (<code>service4_vaultwarden</code>)</h2>
+        <h3>Algemeen doel</h3>
+        <p>Vaultwarden is een lichtgewicht, zelf-gehoste wachtwoordkluis die compatibel is met Bitwarden-clients en -extensies. Het bewaart inloggegevens, wachtwoorden en gerelateerde geheimen op een eigen server.</p>
+        <h3>Motivatie</h3>
+        <p>Zelf hosten geeft volledige controle over gevoelige inloggegevens en maakt het mogelijk om een volwaardige wachtwoordkluis binnen de eigen infrastructuur te draaien zonder extern abonnement. In deze opzet is het overzichtelijk ondergebracht onder het subpath <code>/service4/vault</code> achter Traefik over HTTPS.</p>
+        <h3>Technische opmerkingen</h3>
+        <p><code>vaultwarden/server:latest</code> draait als <code>service4_vaultwarden</code> op <code>proxy-net</code> met persistente opslag op <code>../service4/vaultwarden/data:/data</code>. <code>DOMAIN</code> wordt zonder enkele aanhalingstekens samengesteld als <code>https://${DOMAIN}${VAULT_PATH%/}</code> en de Traefik-router gebruikt <code>Host(`${DOMAIN}`) &amp;&amp; PathPrefix(`${VAULT_PATH}`)</code> op <code>websecure</code> naar poort <code>80</code> van de container (zonder <code>stripprefix</code>, omdat Vaultwarden zijn eigen pad verwerkt). Na het aanmaken van het account wordt <code>SIGNUPS_ALLOWED</code> op <code>false</code> gezet.</p>
+      </article>
+    </section>
+
+    <section class="chapter" id="deployment">
+      <h1>Deployment</h1>
+      <div class="deployment-box">
+        <p>De stack wordt beheerd vanaf een Windows-werkstation (in <code>C:\Users\arne\Documents\Docker\DevOps project</code>) met Docker en Docker Compose, waarbij de projectbestanden, stack-definities (<code>docker-compose.yml</code> en <code>stacks/*.yml</code>) en dashboard-assets (<code>apps/dashboard/</code>) lokaal op schijf staan en een <code>.env</code>-bestand de omgevingsvariabelen (<code>DOMAIN</code>, <code>TZ</code> en de <code>*_PATH</code>-variabelen) levert. Wanneer een container configuratie- of labelwijzigingen krijgt, wordt eerst <code>docker compose config --quiet</code> gedraaid om de samengestelde configuratie te valideren en daarna <code>docker compose up -d --force-recreate &lt;service&gt;</code> uitgevoerd zodat Docker de container opnieuw aanmaakt met de actuele labels, volumes en omgevingsvariabelen.</p>
+
+        <p>De bereikbaarheid is ingericht voor lokaal en lokaal netwerkverkeer (LAN) over HTTPS via Traefik op poort <code>443</code> met SAN-certificaten die zowel <code>localhost</code> als het LAN-IP (<code>192.168.0.213</code>) ondersteunen. Voor toegang buiten het lokale netwerk of over aparte netwerkpaden wordt waar nodig een mesh-VPN zoals Tailscale gebruikt in plaats van onbeveiligd poorten open te zetten. In Git horen de Compose-bestanden, <code>apps/dashboard/index.html</code> en <code>apps/dashboard/config.js.template</code> thuis, terwijl <code>.env</code> (met lokale waarden en eventuele geheimen) buiten versiebeheer blijft via <code>.gitignore</code>; eventuele geautomatiseerde pipelines of updates bouwen/trekken de images en herstarten de betrokken Compose-services gecontroleerd na validatie van de configuratie.</p>
+
+        <pre>Browser / Client (LAN 192.168.0.213 / localhost / Tailscale)
+        │
+        ▼ HTTPS (:443, SAN-certificaat)
+[ Traefik Reverse Proxy ] ──(proxy-net)──► [ devops_dashboard (nginx:alpine) ]
+        │                                    ▲ mounts: index.html, config.js.template
+        ├── /service1/seerr + /login.. ────► [ service1_seerr (:5055) ]
+        ├── /service1/jellyfin, *arr, qbit ► [ service1 media containers ]
+        ├── /service3/drive ───────────────► [ Nextcloud ]
+        └── /service4/vault ───────────────► [ service4_vaultwarden (:80) ]</pre>
+
+        <h3>Zelf deployen vanuit de broncode</h3>
+        <ol>
+          <li><strong>Repository en map voorbereiden:</strong> Open PowerShell in de projectmap (<code>C:\Users\arne\Documents\Docker\DevOps project</code>) en controleer dat <code>docker-compose.yml</code>, <code>stacks/*.yml</code> en <code>apps/dashboard/</code> aanwezig zijn.</li>
+          <li><strong>Omgevingsvariabelen instellen:</strong> Maak in de projectroot een <code>.env</code>-bestand aan met onder meer <code>DOMAIN=192.168.0.213</code>, <code>TZ=Europe/Brussels</code> en de <code>*_PATH</code>-variabelen (zoals <code>VAULT_PATH=/service4/vault</code>, <code>SEERR_PATH=/service1/seerr</code> en <code>NEXTCLOUD_PATH=/service3/drive</code>).</li>
+          <li><strong>Configuratie valideren:</strong> Controleer de samengestelde YAML en variabele-interpolatie met <code>docker compose config --quiet</code>.</li>
+          <li><strong>Services starten en recreëren:</strong> Start de stack met <code>docker compose up -d</code>, en gebruik <code>docker compose up -d --force-recreate &lt;service&gt;</code> (bijvoorbeeld <code>dashboard</code>, <code>seerr</code> of <code>vaultwarden</code>) na wijzigingen aan labels, volumes of <code>.env</code>.</li>
+          <li><strong>Werking verifiëren:</strong> Controleer de containerstatus met <code>docker compose ps</code>, inspecteer bij het dashboard <code>/usr/share/nginx/html/config.js</code> (<code>docker exec devops_dashboard cat /usr/share/nginx/html/config.js</code>), en open <code>https://192.168.0.213/</code> in een browser om de links en diensten te testen.</li>
+        </ol>
+      </div>
+    </section>
+  </div>
+  <h3>Links naar alle services</h3>
+    <div class="sub" id="domain-info"></div>
   <div class="grid" id="links-grid"></div>
+  <div class="container">
 
   <script src="/config.js"></script>
   <script>
@@ -35,10 +281,7 @@
       const domainInfo = document.getElementById("domain-info");
       const grid = document.getElementById("links-grid");
 
-      const cleanDomain = (cfg.domain || "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
-      if (domainInfo && cleanDomain) {
-        domainInfo.textContent = `Domain: ${cleanDomain}`;
-      }
+      
 
       const items = Array.isArray(cfg.services) ? cfg.services : [];
       items.forEach((item) => {
