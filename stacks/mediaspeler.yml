@@ -47,7 +47,7 @@
         - sh
         - -c
         - |
-          mkdir -p /media/movies /media/downloads
+          mkdir -p /media/movies /media/downloads /media/TV
           chown -R 1000:1000 /media
           chmod -R u+rwX,g+rwX /media
     stack-init:
