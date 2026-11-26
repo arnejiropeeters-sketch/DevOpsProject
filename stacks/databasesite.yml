@@ -25,6 +25,7 @@ services:
   databasewebsite:
       build:
         context: ../apps/databasewebsite
+        dockerfile: Dockerfile
       image: databasewebsite:local
       container_name: service2_databasewebsite
       restart: unless-stopped

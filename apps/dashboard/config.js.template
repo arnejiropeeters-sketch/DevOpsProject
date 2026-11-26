@@ -2,12 +2,13 @@ window.APP_CONFIG = {
   domain: "${DOMAIN}",
   services: [
     { name: "Vaultwarden", path: "${VAULT_PATH}/" },
+    { name: "Nextcloud", path: "${NEXTCLOUD_PATH}" },
+    { name: "Jellyfin", path: "${JELLYFIN_PATH}" },
+    { name: "Database", path: "${MINIATURES_APP_PATH}" },
     { name: "qBittorrent", path: "${QBIT_PATH}/" },
     { name: "Sonarr", path: "${SONARR_PATH}" },
     { name: "Radarr", path: "${RADARR_PATH}" },
     { name: "Prowlarr", path: "${PROWLARR_PATH}" },
-    { name: "Seerr", path: "${SEERR_PATH}" },
-    { name: "Jellyfin", path: "${JELLYFIN_PATH}" },
-    { name: "Nextcloud", path: "${NEXTCLOUD_PATH}" }
-  ]
+    { name: "Seerr", path: "${SEERR_PATH}" }
+    ]
 };

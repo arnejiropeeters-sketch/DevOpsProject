@@ -24,5 +24,6 @@ services:
           - SEERR_PATH=${SEERR_PATH}
           - JELLYFIN_PATH=${JELLYFIN_PATH}
           - NEXTCLOUD_PATH=${NEXTCLOUD_PATH}
+          - MINIATURES_APP_PATH=${MINIATURES_APP_PATH}
         command: >
           sh -c "apk add --no-cache gettext >/dev/null 2>&1 && envsubst < /etc/nginx/templates/config.js.template > /usr/share/nginx/html/config.js && exec nginx -g 'daemon off;'"
