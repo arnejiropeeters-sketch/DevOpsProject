@@ -153,7 +153,7 @@
                 - "traefik.http.routers.seerr.service=seerr"
                 - "traefik.http.middlewares.seerr-strip.stripprefix.prefixes=${SEERR_PATH}"
                 # 2. Root-paden router voor Next.js assets, API en /login redirect (zonder stripprefix)
-                - "traefik.http.routers.seerr-root.rule=Host(`${DOMAIN}`) && (PathPrefix(`/login`) || PathPrefix(`/_next`) || PathPrefix(`/api/v1`) || PathPrefix(`/images`) || PathPrefix(`/avatarproxy`) || Path(`/manifest.json`) || Path(`/sw.js`) || Path(`/offline`))"
+                - "traefik.http.routers.seerr-root.rule=Host(`${DOMAIN}`) && (PathPrefix(`/login`) || PathPrefix(`/_next`) || PathPrefix(`/api/v1`) || PathPrefix(`/images`) || PathPrefix(`/avatarproxy`) || Path(`/manifest.json`) || Path(`/sw.js`) || Path(`/offline`) || Path(`/setup`))"
                 - "traefik.http.routers.seerr-root.entrypoints=websecure"
                 - "traefik.http.routers.seerr-root.tls=true"
                 - "traefik.http.routers.seerr-root.priority=50"
@@ -163,13 +163,36 @@
         networks:
           - proxy-net
 
+
+    init-sonarr:
+      image: alpine:latest
+      container_name: service1_init_sonarr
+      environment:
+        - SONARR_PATH=${SONARR_PATH:-/service1/sonarr}
+      volumes:
+        - ../service1/sonarr/config:/config
+      command:
+        - sh
+        - -c
+        - |
+          mkdir -p /config
+          CFG="/config/config.xml"
+          if [ ! -f "$CFG" ]; then
+            printf '<Config>\n  <UrlBase>%s</UrlBase>\n</Config>\n' "$$SONARR_PATH" > "$$CFG"
+          elif grep -q "<UrlBase>" "$$CFG"; then
+            sed -i "s|<UrlBase>.*</UrlBase>|<UrlBase>$${SONARR_PATH}</UrlBase>|g" "$$CFG"
+          else
+            sed -i "s|</Config>|  <UrlBase>$${SONARR_PATH}</UrlBase>\n</Config>|" "$$CFG"
+          fi
+          chown -R 1000:1000 /config
+
     sonarr:
         image: lscr.io/linuxserver/sonarr:latest
         container_name: service1_sonarr
         environment:
           - PUID=1000
           - PGID=1000
-          - TZ=Europe/Brussels
+          - TZ=${TZ}
         volumes:
           - ../service1/sonarr/config:/config
           - ../service1/media:/media
